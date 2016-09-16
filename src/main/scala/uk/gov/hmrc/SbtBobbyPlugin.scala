@@ -54,8 +54,10 @@ object SbtBobbyPlugin extends AutoPlugin {
 
     validate := {
       val isSbtProject = thisProject.value.base.getName == "project" // TODO find less crude way of doing this
+      val assetsFrontendDependency = ModuleID("uk.gov.hmrc", "assets-frontend", Bobby.assetsFrontendVersion)
+
       Bobby.validateDependencies(
-        libraryDependencies.value,
+        libraryDependencies.value :+ assetsFrontendDependency,
         ProjectPlugin.plugins(buildStructure.value),
         scalaVersion.value,
         repositories.value,

@@ -45,25 +45,30 @@ trait Nexus extends RepoSearch {
   val nexus: NexusCredentials
 
   def search(versionInformation: ModuleID, scalaVersion: Option[String]):Try[Version]={
+
+    if (versionInformation.name == "assets-frontend") {
+      query(versionInformation, scalaVersion)
+    } else {
+      versionInformation.organization match {
+        case "uk.gov.hmrc" => Failure(new Exception("(hmrc-lib)"))
+        case _ => query(versionInformation, scalaVersion)
+      }
+    }
+  }
+
+  def query(versionInformation: ModuleID, scalaVersion: Option[String]):Try[Version] = {
     import Helpers._
 
-    versionInformation.organization match {
+    executeQuery(versionInformation, scalaVersion).flatMap{ ov =>
+      val nonScalaVersionResult: Try[Option[Version]] = (scalaVersion, ov) match {
 
-      case "uk.gov.hmrc" => Failure(new Exception("(hmrc-lib)"))
-
-      case _ => {
-        executeQuery(versionInformation, scalaVersion).flatMap{ ov =>
-          val nonScalaVersionResult: Try[Option[Version]] = (scalaVersion, ov) match {
-
-            case (Some(_), None) => {
-              executeQuery(versionInformation, None)
-            }
-            case _ => Success(ov)
-          }
-
-          nonScalaVersionResult.flatMap(_.toTry(new Exception("(see bintray)")))
+        case (Some(_), None) => {
+          executeQuery(versionInformation, None)
         }
+        case _ => Success(ov)
       }
+
+      nonScalaVersionResult.flatMap(_.toTry(new Exception("(see bintray)")))
     }
   }
 

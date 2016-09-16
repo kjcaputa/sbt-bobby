@@ -17,16 +17,14 @@
 package uk.gov.hmrc.bobby
 
 import java.net.URL
-
-import org.joda.time.LocalDate
+import com.typesafe.config.ConfigFactory
 import sbt._
 import uk.gov.hmrc.SbtBobbyPlugin.BobbyKeys.Repo
 import uk.gov.hmrc.bobby.conf.Configuration
 import uk.gov.hmrc.bobby.domain._
 import uk.gov.hmrc.bobby.output.{Output, JsonOutingFileWriter, Tabulator, TextOutingFileWriter}
 import uk.gov.hmrc.bobby.repos.Repositories
-
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 class BobbyValidationFailedException(message: String) extends RuntimeException(message)
 
@@ -42,6 +40,20 @@ object Bobby {
     "org.scala-lang"
   )
 
+  val assetsFrontendVersion = {
+    val serviceConfig = ConfigFactory.parseFile(new File("conf/application.conf"))
+    val govUkAssetsVersion = Try(serviceConfig.getString("govuk-tax.Prod.assets.version"))
+    val assetsVersion = Try(serviceConfig.getString("Prod.assets.version"))
+
+    govUkAssetsVersion match {
+      case Success(gv) => gv
+      case Failure(_) => assetsVersion match {
+        case Success(v) => v
+        case Failure(_) => "(AF version not found)"
+      }
+    }
+  }
+
   def validateDependencies(libraries: Seq[ModuleID],
                            plugins: Seq[ModuleID],
                            scalaVersion: String,
@@ -52,7 +64,6 @@ object Bobby {
                            isSbtProject: Boolean = false) = {
 
     logger.info(s"[bobby] Bobby version $currentVersion")
-
 
     val config = new Configuration(deprecatedDependenciesUrl, jsonOutputFileOverride)
 
@@ -99,6 +110,5 @@ object Bobby {
       .map(_._2.head)
       .toSeq
   }
-
 
 }

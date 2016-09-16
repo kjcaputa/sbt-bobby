@@ -20,6 +20,13 @@
       "range": "[1.0.0]",
       "reason": "play-health",
       "from": "2010-01-01"
+    },
+    {
+      "organisation": "uk.gov.hmrc",
+      "name": "assets-frontend",
+      "range": "[1.225.0]",
+      "reason": "deprecated",
+      "from": "2016-09-30"
     }
   ],
   "plugins": [
